@@ -1,0 +1,132 @@
+/* Stack It: the engraving style shared by every drawing.
+   .s  paper fill with an ink outline     .l  ink line only
+   .h  diagonal hatching (shadow side)    .a  the one accent color
+   .grid  fine grid (solar panels)        Strokes stay thin at any size. */
+
+svg .s,
+svg .a,
+svg .l,
+svg .snow,
+svg .moon,
+svg .bill {
+  stroke: var(--art-ink);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+svg .s { fill: var(--art-fill); }
+svg .a { fill: var(--art-accent); }
+svg .l { fill: none; stroke-width: 1; }
+svg .h { fill: url(#hatch); stroke: none; }
+svg .grid rect { fill: url(#grid); stroke: none; }
+svg .snow { fill: #fbfbf6; stroke-width: 1; }
+svg .moon { fill: #ece7d8; stroke: #8d887b; }
+svg .hd { fill: url(#hatch-dark); stroke: none; }
+svg .crater { fill: rgb(120 114 100 / 0.12); stroke: rgb(70 66 58 / 0.6); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.hatch-line--dark { stroke: rgb(60 58 66 / 0.5); }
+svg .cloud { fill: rgb(255 255 255 / 0.93); stroke: rgb(60 72 92 / 0.32); stroke-width: 1; vector-effect: non-scaling-stroke; }
+svg .skyline { fill: var(--skyline); }
+.hatch-line { stroke: var(--hatch); stroke-width: 0.8; fill: none; }
+
+/* The intro bill */
+svg .bill { fill: #d6e8c6; stroke: #2f5222; }
+svg .bill__num { font: 700 22px var(--font-display); fill: #2f5222; }
+svg .bill__word { font: 600 7px var(--font-ui); letter-spacing: 0.22em; fill: #2f5222; }
+
+/* Landmark drawings hang beside the stack, under their height line */
+.art {
+  left: calc(var(--stack-x) + var(--stack-w) / 2 + 1.5rem);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.art svg {
+  display: block;
+  overflow: visible;
+  height: auto;
+}
+
+/* Things that fly or orbit are centered on their line, so they sit past the label */
+.art--center {
+  left: calc(var(--stack-x) + var(--stack-w) / 2 + 13rem);
+}
+
+/* Ground-based landmarks: the log scale squeezes their bases, so the bottom fades out */
+.art--top svg {
+  -webkit-mask-image: linear-gradient(#000 55%, transparent 100%);
+  mask-image: linear-gradient(#000 55%, transparent 100%);
+}
+
+/* The Kármán line: a faint glowing band across the sky */
+.art--line {
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid rgb(170 215 255 / 0.85);
+  box-shadow: 0 0 14px 3px rgb(120 190 255 / 0.45);
+}
+
+/* Clouds */
+.cloud-wrap {
+  will-change: transform;
+  transform-origin: 50% 50%;
+}
+
+.cloud-wrap svg {
+  display: block;
+}
+
+/* Skyline on the horizon */
+.skyline-wrap {
+  right: 0;
+  will-change: transform;
+}
+
+.skyline-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: translateY(-100%);
+}
+
+/* Stars and Earth */
+.stars {
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.earth {
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 16%, #8cc0ec 0%, #4683bb 32%, #24557f 64%, #102c48 100%);
+  box-shadow: 0 0 0 2px rgb(150 200 255 / 0.35), 0 0 48px 12px rgb(110 170 255 / 0.3);
+  will-change: transform, width, height;
+}
+
+.earth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 9px);
+}
+
+@media (max-width: 720px) {
+  .art svg {
+    max-width: 30vw;
+  }
+
+  .art,
+  .art--center {
+    left: calc(var(--stack-x) + var(--stack-w) / 2 + 0.75rem);
+  }
+
+  .cloud-wrap svg {
+    width: 80px;
+    height: auto;
+  }
+}

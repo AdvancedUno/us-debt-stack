@@ -1,17 +1,43 @@
-/* Stack It: page layout. The stage is fixed; the track scrolls over it. */
+/* Stack It: page layout. The stage is fixed; the track scrolls over it;
+   the top bar, rail, altimeter and dock float above both. */
 
 .stage {
   position: fixed;
   inset: 0;
+  z-index: 0;
   overflow: hidden;
   background: var(--sky);
-  --stack-x: 52%;
-  --stack-w: clamp(56px, 8vw, 104px);
+  --stack-x: 46%;
+  --stack-w: clamp(56px, 7vw, 96px);
 }
 
+.stage > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.scenery,
+.art-layer,
+.markers {
+  inset: 0;
+  pointer-events: none;
+}
+
+.markers > * {
+  pointer-events: auto;
+}
+
+/* The track only carries text; clicks pass through to the stage except on its cards. */
 .track {
   position: relative;
   z-index: 1;
+  pointer-events: none;
+}
+
+.track .card,
+.track .sources {
+  pointer-events: auto;
 }
 
 /* Section heights are set in px by climb.js (screens x viewport height). */
@@ -19,45 +45,84 @@
   min-height: 100vh;
   display: grid;
   align-items: center;
-  padding: var(--space-4) clamp(1rem, 4vw, 3rem);
+  padding: calc(var(--topbar-h) + var(--space-3)) clamp(1rem, 4vw, 3rem) var(--space-4);
 }
 
 .chapter {
   min-height: 150vh; /* overwritten by climb.js */
-  padding: 14vh clamp(1rem, 4vw, 3rem) 0;
+  padding: calc(var(--topbar-h) + 6vh) clamp(1rem, 4vw, 3rem) 0;
 }
 
 .finale {
   min-height: 100vh;
   display: grid;
   align-content: center;
-  gap: var(--space-4);
-  padding: var(--space-8) clamp(1rem, 4vw, 3rem);
+  gap: var(--space-3);
+  padding: var(--space-8) clamp(1rem, 4vw, 3rem) 14rem;
+}
+
+.topbar {
+  position: fixed;
+  z-index: 5;
+  inset: 0 0 auto;
+}
+
+.rail {
+  position: fixed;
+  z-index: 4;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .altimeter {
   position: fixed;
-  z-index: 2;
-  top: var(--space-3);
-  right: var(--space-3);
-  width: 17rem;
+  z-index: 4;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  width: 16.5rem;
+}
+
+.dock {
+  position: fixed;
+  z-index: 4;
+  right: 4.5rem;
+  bottom: var(--space-3);
+  width: 21.5rem;
+}
+
+.tip {
+  position: fixed;
+  z-index: 6;
+  top: 0;
+  left: 0;
 }
 
 @media (max-width: 720px) {
-  .stage {
-    --stack-x: 62%;
-    --stack-w: 52px;
+  :root {
+    --topbar-h: 52px;
   }
 
-  .chapter {
-    padding-top: 8vh;
+  .stage {
+    --stack-x: 64%;
+    --stack-w: 46px;
+  }
+
+  .rail {
+    display: none;
   }
 
   .altimeter {
-    top: auto;
-    left: var(--space-2);
-    right: var(--space-2);
-    bottom: var(--space-2);
+    left: var(--space-1);
+    right: var(--space-1);
+    bottom: var(--space-1);
+    width: auto;
+  }
+
+  .dock {
+    left: var(--space-1);
+    right: var(--space-1);
+    bottom: calc(var(--space-1) + 80px);
     width: auto;
   }
 }

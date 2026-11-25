@@ -1,46 +1,50 @@
-// Stack It: the climb. Maps scroll position to altitude and draws the stage.
+// Stack It: the climb. Maps scroll position to altitude and draws the stack and ground.
+// Other modules (scenery, landmarks, altimeter, nav) subscribe and draw from the same frame.
 //
-// Model: the climb's chapter sections are laid out one after another, each
-// `chapter.screens` viewport-heights tall. Scroll progress p in [0, 1] runs from
-// the top of the first chapter to the bottom of the last. Anything at altitude h
-// is drawn at   y = eye - (progressAt(h) - p) * P   where P is the climb's total
-// height in px, so the world moves 1:1 with the scroll and scrolling down climbs up.
+// Model: the chapter sections are laid out one after another, each `chapter.screens`
+// viewport-heights tall. Scroll progress p in [0, 1] runs from the top of the first
+// chapter to the bottom of the last. Something at altitude h is drawn at
+//   y = eye - (progressAt(h) - p) * P
+// where P is the climb's total height in px, so the world moves 1:1 with the scroll
+// and scrolling down climbs up. Passing a depth < 1 moves distant things more slowly.
 
-import {
-  DETAIL_LEVELS, LANDMARKS, altitudeAt, chapterAt, detailLevelFor, metersPerProgress, metersToDollars, progressAt, totalScreens,
-} from './scale.js';
-import { formatHeight, formatUSDCompact } from './format.js';
+import { altitudeAt, chapterAt, detailLevelFor, detailLevels, metersPerProgress, progressAt, totalScreens } from './scale.js';
 import { skyAt } from './sky.js';
 
 const EYE = 0.62; // the camera's altitude sits this far down the viewport
-const BOLD_MIN_PX = 14; // bold texture lines are at least this far apart
 const OFFSCREEN = 160; // px of slack before hiding things outside the viewport
+const BOLD_MIN_PX = 14; // bold texture lines are at least this far apart
 
-export function createClimb({ stage, track, chapters, stackTop, stackLabel, onUpdate = () => {} }) {
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+
+export function createClimb({ stage, track, chapters }) {
   const sections = chapters.map((c) => {
     const el = track.querySelector(`[data-chapter="${c.id}"]`);
     if (!el) throw new Error(`Missing section for chapter "${c.id}"`);
     return el;
   });
   const screens = totalScreens(chapters);
+  const root = document.documentElement;
   const ground = stage.querySelector('.ground');
-  const stack = stage.querySelector('.stack');
-  const texture = stage.querySelector('.stack__texture');
-  const markerLayer = stage.querySelector('.markers');
+  const stackEl = stage.querySelector('.stack');
+  const texture = stackEl.querySelector('.stack__texture');
+  const upper = stackEl.querySelector('.stack__upper');
+  const flag = stage.querySelector('.flag');
+  const flagText = flag.querySelector('.flag__text');
 
-  const markers = [
-    ...LANDMARKS.map((l) => ({ ...l, kind: l.id === 'moon' ? 'moon' : 'landmark' })),
-    { id: 'top', name: `Top of the stack, ${stackLabel}`, height: stackTop, kind: 'top' },
-  ].map((m) => ({ ...m, el: renderMarker(m), progress: 0, visible: false }));
-  markerLayer.replaceChildren(...markers.map((m) => m.el));
+  let stack = { top: 0, publicTop: null, denomination: 100, label: '' };
+  let levels = detailLevels(100);
+  const subscribers = new Set();
 
+  let vw = 0;
   let vh = 0;
   let climbTop = 0;
-  let P = 0;
-  let stackTopProgress = 0;
+  let P = 1;
   let frame = 0;
+  let lastSky = '';
 
   function measure() {
+    vw = window.innerWidth;
     vh = window.innerHeight;
     chapters.forEach((c, i) => {
       sections[i].style.minHeight = '0';
@@ -48,68 +52,80 @@ export function createClimb({ stage, track, chapters, stackTop, stackLabel, onUp
     });
     climbTop = sections[0].getBoundingClientRect().top + window.scrollY;
     P = screens * vh;
-    stackTopProgress = progressAt(stackTop, chapters);
-    for (const m of markers) m.progress = progressAt(m.height, chapters);
   }
 
-  const yFor = (progress, p, eye) => eye - (progress - p) * P;
+  function progressFromScroll() {
+    const scrolled = window.scrollY - climbTop;
+    // Snap the last pixel to the Moon so rounding in section heights can't leave you short.
+    return scrolled >= P - 1 ? 1 : clamp01(scrolled / P);
+  }
 
   function render() {
     frame = 0;
-    const scrolled = window.scrollY - climbTop;
-    // Snap the last pixel to the Moon so rounding in section heights can't leave you 14 km short.
-    const p = scrolled >= P - 1 ? 1 : Math.max(0, scrolled / P);
+    const p = progressFromScroll();
     const altitude = altitudeAt(p, chapters);
     const eye = vh * EYE;
+    const yAt = (h, depth = 1) => eye - (progressAt(h, chapters) - p) * P * depth;
+    const visibleY = (y, slack = OFFSCREEN) => y > -slack && y < vh + slack;
 
     // Sky
     const sky = skyAt(altitude);
-    document.documentElement.style.setProperty('--sky', sky.color);
-    stage.dataset.sky = sky.dark ? 'dark' : 'light';
+    if (sky.color !== lastSky) {
+      root.style.setProperty('--sky', sky.color);
+      root.dataset.sky = sky.dark ? 'dark' : 'light';
+      lastSky = sky.color;
+    }
 
     // Ground: its top edge is altitude 0
-    const groundY = yFor(0, p, eye);
+    const groundY = yAt(0);
     ground.style.transform = `translate3d(0, ${groundY.toFixed(1)}px, 0)`;
     ground.style.visibility = groundY > vh + OFFSCREEN ? 'hidden' : 'visible';
 
     // Stack: from the ground to its top, clipped to the viewport
-    const top = Math.max(yFor(stackTopProgress, p, eye), -OFFSCREEN);
+    const topY = yAt(stack.top);
+    const top = Math.max(topY, -OFFSCREEN);
     const bottom = Math.min(groundY, vh + OFFSCREEN);
     const pxPerMeter = P / metersPerProgress(altitude, chapters);
-    // Bold lines: the smallest unit at least BOLD_MIN_PX apart. Faint lines: the unit below it.
-    const level = detailLevelFor(pxPerMeter, BOLD_MIN_PX);
-    const fine = DETAIL_LEVELS[DETAIL_LEVELS.indexOf(level) - 1];
+    const level = detailLevelFor(pxPerMeter, BOLD_MIN_PX, levels);
+    const fine = levels[levels.indexOf(level) - 1];
+
     if (bottom > top) {
-      stack.style.visibility = 'visible';
-      stack.style.transform = `translate3d(0, ${top.toFixed(1)}px, 0)`;
-      stack.style.height = `${(bottom - top).toFixed(1)}px`;
+      stackEl.style.visibility = 'visible';
+      stackEl.style.transform = `translate3d(0, ${top.toFixed(1)}px, 0)`;
+      stackEl.style.height = `${(bottom - top).toFixed(1)}px`;
       // Lines are spaced at the local zoom around the eye line and phased so they
       // line up with whole units and move with the scroll.
       const altAtBottom = altitudeAt(p + (eye - bottom) / P, chapters);
       setLines(texture, '', level, pxPerMeter, altAtBottom);
-      if (fine) {
-        const finePx = fine.height * pxPerMeter;
-        setLines(texture, '-fine', fine, pxPerMeter, altAtBottom);
-        texture.style.setProperty('--fine-alpha', Math.min(0.5, Math.max(0, (finePx - 1.5) / 8)).toFixed(3));
+      if (fine) setLines(texture, '-fine', fine, pxPerMeter, altAtBottom);
+      const finePx = fine ? fine.height * pxPerMeter : 0;
+      texture.style.setProperty('--fine-alpha', Math.min(0.5, Math.max(0, (finePx - 1.5) / 8)).toFixed(3));
+      // Currency straps wrap the middle of each strap; visible while straps are distinguishable.
+      const strapPx = levels[1].height * pxPerMeter;
+      texture.style.setProperty('--band-alpha', Math.min(1, Math.max(0, (strapPx - 0.4) / 2)).toFixed(3));
+      if (texture.dataset.level !== level.name) texture.dataset.level = level.name;
+
+      // Public vs. intragovernmental split (shown on hover)
+      if (stack.publicTop != null) {
+        const splitY = Math.min(Math.max(yAt(stack.publicTop), top), bottom);
+        upper.style.height = `${(splitY - top).toFixed(1)}px`;
       } else {
-        texture.style.setProperty('--fine-alpha', '0');
+        upper.style.height = '0px';
       }
     } else {
-      stack.style.visibility = 'hidden';
+      stackEl.style.visibility = 'hidden';
     }
 
-    // Markers
-    for (const m of markers) {
-      const y = yFor(m.progress, p, eye);
-      const visible = y > -OFFSCREEN && y < vh + OFFSCREEN;
-      if (visible) m.el.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
-      if (visible !== m.visible) {
-        m.el.style.visibility = visible ? 'visible' : 'hidden';
-        m.visible = visible;
-      }
-    }
+    // Flag planted on top of the stack
+    const flagVisible = visibleY(topY, 0);
+    flag.style.visibility = flagVisible ? 'visible' : 'hidden';
+    if (flagVisible) flag.style.transform = `translate3d(0, ${topY.toFixed(1)}px, 0)`;
 
-    onUpdate({ altitude, progress: p, chapter: chapterAt(p, chapters), level });
+    const ctx = {
+      altitude, p, P, vw, vh, eye, yAt, visibleY, groundY,
+      chapter: chapterAt(p, chapters), level, stack,
+    };
+    for (const fn of subscribers) fn(ctx);
   }
 
   const schedule = () => {
@@ -121,16 +137,29 @@ export function createClimb({ stage, track, chapters, stackTop, stackLabel, onUp
   };
 
   measure();
-  render();
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', onResize);
 
   return {
-    destroy() {
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', onResize);
-      cancelAnimationFrame(frame);
+    chapters,
+    /** Replace what the stack shows: { top, publicTop, denomination, label }. */
+    setStack(next) {
+      stack = { ...stack, ...next };
+      levels = detailLevels(stack.denomination);
+      stackEl.dataset.denomination = String(stack.denomination);
+      flagText.textContent = stack.label;
+      schedule();
     },
+    /** Scroll so the camera sits at altitude h. */
+    scrollToAltitude(h, { behavior = 'auto' } = {}) {
+      window.scrollTo({ top: climbTop + progressAt(h, chapters) * P, behavior });
+    },
+    subscribe(fn) {
+      subscribers.add(fn);
+      schedule();
+      return () => subscribers.delete(fn);
+    },
+    refresh: schedule,
   };
 }
 
@@ -139,22 +168,4 @@ function setLines(el, suffix, level, pxPerMeter, altAtBottom) {
   const frac = (altAtBottom / level.height) % 1;
   el.style.setProperty(`--unit${suffix}`, `${unitPx.toFixed(2)}px`);
   el.style.setProperty(`--phase${suffix}`, `${(((1 - frac) % 1) * unitPx).toFixed(2)}px`);
-}
-
-function renderMarker(m) {
-  const el = document.createElement('div');
-  el.className = `marker marker--${m.kind}`;
-  el.style.visibility = 'hidden';
-  const line = document.createElement('span');
-  line.className = 'marker__line';
-  const label = document.createElement('span');
-  label.className = 'marker__label';
-  const name = document.createElement('span');
-  name.className = 'marker__name';
-  name.textContent = m.name;
-  const detail = document.createElement('span');
-  detail.textContent = `${formatHeight(m.height)} · ${formatUSDCompact(metersToDollars(m.height))}`;
-  label.append(name, detail);
-  el.append(line, label);
-  return el;
 }

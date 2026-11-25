@@ -22,29 +22,72 @@
   <link rel="stylesheet" href="./css/layout.css">
   <link rel="stylesheet" href="./css/chapters.css">
   <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/art.css">
   <script type="module" src="./js/main.js"></script>
 </head>
 <body>
-  <!-- The stage is the fixed "camera" view: sky, ground, the stack and landmark markers.
-       It is decorative; the same information is in the chapter text below. -->
-  <div class="stage" aria-hidden="true">
-    <div class="ground"></div>
-    <div class="stack"><div class="stack__texture"></div></div>
+  <!-- Shared engraving patterns, referenced by every drawing. -->
+  <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="4" class="hatch-line"/>
+      </pattern>
+      <pattern id="hatch-dark" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="4" class="hatch-line hatch-line--dark"/>
+      </pattern>
+      <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
+        <path d="M5 0 V5 M0 5 H5" class="hatch-line"/>
+      </pattern>
+    </defs>
+  </svg>
+
+  <header class="topbar">
+    <a class="brand" href="#top">Stack&nbsp;It</a>
+    <div class="topbar__ticker">
+      <span class="topbar__label">Estimated debt right now</span>
+      <span class="topbar__value" data-field="ticker" role="timer" aria-label="Estimated national debt right now">&hellip;</span>
+    </div>
+    <div class="topbar__arrived">
+      <span class="pile" aria-hidden="true"></span>
+      <span class="topbar__stack">
+        <span class="topbar__label">Since you arrived</span>
+        <span class="topbar__small"><span data-field="arrived">+$0</span> <span data-field="arrived-time"></span></span>
+      </span>
+    </div>
+  </header>
+
+  <!-- The stage is the fixed "camera" view. Back to front: sky scenery, ground,
+       landmark drawings, the stack, near clouds, landmark labels. -->
+  <div class="stage">
+    <div class="scenery scenery--back" aria-hidden="true"></div>
+    <div class="ground" aria-hidden="true"></div>
+    <div class="art-layer"></div>
+    <div class="stack" tabindex="0" role="button" aria-label="The stack of bills. Press to see who holds the debt.">
+      <div class="stack__texture"></div>
+      <div class="stack__upper"></div>
+    </div>
+    <div class="flag" aria-hidden="true"><span class="flag__pole"></span><span class="flag__text"></span></div>
+    <div class="scenery scenery--front" aria-hidden="true"></div>
     <div class="markers"></div>
   </div>
+  <div class="tip" role="status" hidden></div>
+
+  <nav class="rail" aria-label="Chapters"></nav>
 
   <main class="track">
     <section class="intro" id="top" aria-labelledby="intro-title">
       <div class="card card--intro">
+        <div class="intro__bill" aria-hidden="true"></div>
         <p class="eyebrow">U.S. total public debt outstanding</p>
         <h1 id="intro-title" class="debt-figure" data-field="debt-total">Loading&hellip;</h1>
         <p class="as-of">
-          As of <span data-field="debt-date">&hellip;</span> &middot;
+          Official figure as of <span data-field="debt-date">&hellip;</span> &middot;
           <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">U.S. Treasury, Debt to the Penny</a>
         </p>
         <p class="lede">Stacked in $100 bills, it would reach <strong data-field="stack-height">&hellip;</strong> into the sky.</p>
-        <p class="small">Growing by about <span data-field="growth-per-second">&hellip;</span> a second (an estimate from the last year of data).</p>
+        <p class="small">It grows by about <span data-field="growth-per-second">&hellip;</span> a second, on average over the last year.</p>
         <a class="button" href="#ground">Start climbing</a>
+        <p class="small hint">Scroll down to climb up. Keys 1&ndash;7 jump between chapters.</p>
         <p class="data-note" data-field="data-note" hidden></p>
       </div>
     </section>
@@ -53,7 +96,7 @@
       <div class="card">
         <p class="chapter__num">Chapter 1</p>
         <h2 id="ch1-title">Ground level</h2>
-        <p>One $100 bill is 0.11&nbsp;mm thick. The first centimeter of the stack is about 92 bills: roughly $9,200.</p>
+        <p>One $100 bill is 0.11&nbsp;mm thick. The first centimeter of the stack is about 92 bills: roughly $9,200. Each mustard band is a $10,000 strap.</p>
       </div>
     </section>
 
@@ -109,11 +152,11 @@
       <div class="card card--wide">
         <h2 id="finale-title">The whole climb, to scale</h2>
         <p>On one straight ruler from the ground to the Moon, today's stack covers <strong data-field="moon-percent">&hellip;</strong> of the distance.</p>
-        <div class="ruler" role="img" data-field-label="ruler">
+        <div class="ruler" role="img" aria-label="A linear ruler from the ground to the Moon.">
           <div class="ruler__bar"><div class="ruler__stack"></div></div>
           <div class="ruler__ticks"></div>
         </div>
-        <p class="small">Stack width is not to scale: a real stack would be 15.6&nbsp;cm wide.</p>
+        <p class="small">Stack width is not to scale: a real stack would be 15.6&nbsp;cm wide. Drawings are not to scale; their heights are.</p>
       </div>
       <footer class="sources">
         <p>Data: <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">Debt to the Penny</a> and
@@ -125,7 +168,8 @@
     </section>
   </main>
 
-  <aside class="altimeter" aria-label="Altimeter" hidden>
+  <aside class="altimeter panel" aria-label="Altimeter" hidden>
+    <div class="altimeter__gauge" aria-hidden="true"><div class="altimeter__fill"></div></div>
     <dl>
       <div class="altimeter__row altimeter__row--main">
         <dt>Height</dt>
@@ -145,5 +189,42 @@
       </div>
     </dl>
   </aside>
+
+  <details class="dock panel" open>
+    <summary class="dock__summary">Explore the stack</summary>
+    <div class="dock__body">
+      <fieldset class="segmented">
+        <legend class="visually-hidden">Whose debt</legend>
+        <label><input type="radio" name="mode" value="nation" checked><span>Whole country</span></label>
+        <label><input type="radio" name="mode" value="person"><span>Per person</span></label>
+      </fieldset>
+
+      <p class="dock__label" data-out="label">&hellip;</p>
+      <p class="dock__amount" data-out="amount">&hellip;</p>
+      <p class="dock__line"><span data-out="height"></span> <span data-out="context"></span></p>
+      <p class="dock__note" data-out="gdp"></p>
+
+      <div data-panel="nation">
+        <label class="dock__slider">
+          <span class="visually-hidden">Year</span>
+          <input type="range" data-control="year" min="0" max="1" value="1" step="1">
+        </label>
+        <div class="dock__range">
+          <span data-out="first-year">1790</span>
+          <button type="button" class="link-button" data-control="today">Back to today</button>
+          <span>Today</span>
+        </div>
+        <p class="dock__note">Nominal dollars. Year-end figures for each fiscal year.</p>
+      </div>
+
+      <div data-panel="person" hidden>
+        <fieldset class="segmented segmented--small">
+          <legend class="visually-hidden">Bill denomination</legend>
+          <label><input type="radio" name="denomination" value="100" checked><span>$100 bills</span></label>
+          <label><input type="radio" name="denomination" value="1"><span>$1 bills</span></label>
+        </fieldset>
+      </div>
+    </div>
+  </details>
 </body>
 </html>

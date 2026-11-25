@@ -9,7 +9,10 @@ import {
   buildChapters,
   chapterAt,
   detailLevelFor,
+  detailLevels,
   dollarsToMeters,
+  landmarkBelow,
+  moneyWords,
   growthPerSecond,
   metersPerProgress,
   metersToDollars,
@@ -137,6 +140,33 @@ test('growthPerSecond uses the real day count', () => {
   );
   close(rate, 76_028.39, 1e-6);
   assert.equal(growthPerSecond({ date: '2026-01-01', total: 1 }, { date: '2026-01-01', total: 0 }), 0);
+});
+
+test('detail level labels follow the denomination', () => {
+  assert.deepEqual(DETAIL_LEVELS.map((l) => l.label), [
+    '$100 bill', '$10,000 strap', '$1 million brick', '$100 million pallet', '$10 billion block', '$1 trillion tower',
+  ]);
+  assert.deepEqual(detailLevels(1).slice(0, 3).map((l) => l.label), ['$1 bill', '$100 strap', '$10,000 brick']);
+  assert.equal(detailLevels(1)[1].height, DETAIL_LEVELS[1].height); // same paper, different value
+});
+
+test('moneyWords', () => {
+  assert.equal(moneyWords(1), '$1');
+  assert.equal(moneyWords(10_000), '$10,000');
+  assert.equal(moneyWords(1e6), '$1 million');
+  assert.equal(moneyWords(1e10), '$10 billion');
+  assert.equal(moneyWords(1e12), '$1 trillion');
+});
+
+test('landmarkBelow finds the highest landmark passed', () => {
+  assert.equal(landmarkBelow(1), null);
+  assert.equal(landmarkBelow(13).id, 'house');
+  assert.equal(landmarkBelow(dollarsToMeters(258.7e9)).id, 'karman'); // 1945: 282 km
+  assert.equal(landmarkBelow(dollarsToMeters(DEBT)).id, 'geo');
+});
+
+test('every landmark has a fact', () => {
+  for (const l of LANDMARKS) assert.ok(l.fact && l.fact.length > 20, l.id);
 });
 
 test('per-person share', () => {

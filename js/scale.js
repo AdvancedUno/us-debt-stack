@@ -19,18 +19,30 @@ export function metersToDollars(meters, denomination = BILL_DENOMINATION) {
 }
 
 export const LANDMARKS = Object.freeze([
-  { id: 'person', name: 'A person', height: 1.75 },
-  { id: 'bus', name: 'School bus', height: 3.2 },
-  { id: 'house', name: 'Two-story house', height: 8 },
-  { id: 'arch', name: 'Gateway Arch', height: 192 },
-  { id: 'burj', name: 'Burj Khalifa', height: 828 },
-  { id: 'everest', name: 'Mount Everest', height: 8_849 },
-  { id: 'airliner', name: 'Airliner cruising altitude', height: 11_000 },
-  { id: 'karman', name: 'Edge of space (Kármán line)', height: 100_000 },
-  { id: 'iss', name: 'International Space Station', height: 400_000 },
-  { id: 'gps', name: 'GPS satellites', height: 20_200_000 },
-  { id: 'geo', name: 'Geostationary orbit', height: 35_786_000 },
-  { id: 'moon', name: 'The Moon', height: MOON_DISTANCE_M },
+  { id: 'person', name: 'A person', height: 1.75,
+    fact: 'About average adult height. Counting the bills at one per second would take about four and a half hours.' },
+  { id: 'bus', name: 'School bus', height: 3.2,
+    fact: 'A standard full-size school bus stands about 3.2 m (10.5 ft) tall.' },
+  { id: 'house', name: 'Two-story house', height: 8,
+    fact: 'A typical two-story house reaches about 8 m to the top of the roof.' },
+  { id: 'arch', name: 'Gateway Arch', height: 192,
+    fact: 'Completed in St. Louis in 1965, it is 630 ft tall and exactly as wide as it is tall.' },
+  { id: 'burj', name: 'Burj Khalifa', height: 828,
+    fact: 'The tallest building in the world since it opened in Dubai in 2010.' },
+  { id: 'everest', name: 'Mount Everest', height: 8_849,
+    fact: 'Earth’s highest point above sea level, re-measured at 8,848.86 m in 2020.' },
+  { id: 'airliner', name: 'Airliner cruising altitude', height: 11_000,
+    fact: 'Most passenger jets cruise between about 10 and 12 km (33,000 to 39,000 ft).' },
+  { id: 'karman', name: 'Edge of space (Kármán line)', height: 100_000,
+    fact: 'A widely used boundary for where space begins, 100 km up.' },
+  { id: 'iss', name: 'International Space Station', height: 400_000,
+    fact: 'Orbits roughly 400 km up and circles Earth about every 90 minutes.' },
+  { id: 'gps', name: 'GPS satellites', height: 20_200_000,
+    fact: 'About 30 GPS satellites orbit at this height, each circling Earth twice a day.' },
+  { id: 'geo', name: 'Geostationary orbit', height: 35_786_000,
+    fact: 'Here an orbit takes exactly one day, so a satellite seems to hang over one spot on Earth.' },
+  { id: 'moon', name: 'The Moon', height: MOON_DISTANCE_M,
+    fact: 'This is the average distance. It varies from about 363,000 to 406,000 km over each orbit.' },
 ].map(Object.freeze));
 
 /** The first landmark strictly above `altitude`, or null past the last one. */
@@ -38,31 +50,40 @@ export function nextLandmark(altitude, landmarks = LANDMARKS) {
   return landmarks.find((l) => l.height > altitude) ?? null;
 }
 
-// Levels of detail for drawing the stack. Each level bundles 100 of the one below.
-const LEVEL_NAMES = [
-  ['bill', '$100 bill'],
-  ['strap', '$10,000 strap'],
-  ['brick', '$1 million brick'],
-  ['pallet', '$100 million pallet'],
-  ['block', '$10 billion block'],
-  ['tower', '$1 trillion tower'],
-];
-export const DETAIL_LEVELS = Object.freeze(
-  LEVEL_NAMES.map(([name, label], i) => {
-    const bills = 100 ** i;
-    return Object.freeze({
-      name,
-      label,
-      bills,
-      dollars: bills * BILL_DENOMINATION,
-      height: bills * BILL_THICKNESS_M,
-    });
-  }),
-);
+/** The highest landmark at or below `altitude`, or null below the first one. */
+export function landmarkBelow(altitude, landmarks = LANDMARKS) {
+  return landmarks.filter((l) => l.height <= altitude).at(-1) ?? null;
+}
+
+/** "$1", "$10,000", "$1 million", "$10 billion", "$1 trillion" */
+export function moneyWords(dollars) {
+  for (const [value, word] of [[1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million']]) {
+    if (dollars >= value) return `$${Number((dollars / value).toPrecision(3))} ${word}`;
+  }
+  return `$${dollars.toLocaleString('en-US')}`;
+}
+
+// Levels of detail for drawing the stack. Each level bundles 100 of the one below:
+// bill, strap, brick, pallet, block, tower. Labels depend on the bill denomination.
+const LEVEL_NAMES = ['bill', 'strap', 'brick', 'pallet', 'block', 'tower'];
+const levelCache = new Map();
+
+export function detailLevels(denomination = BILL_DENOMINATION) {
+  if (!levelCache.has(denomination)) {
+    levelCache.set(denomination, Object.freeze(LEVEL_NAMES.map((name, i) => {
+      const bills = 100 ** i;
+      const dollars = bills * denomination;
+      return Object.freeze({ name, bills, dollars, height: bills * BILL_THICKNESS_M, label: `${moneyWords(dollars)} ${name}` });
+    })));
+  }
+  return levelCache.get(denomination);
+}
+
+export const DETAIL_LEVELS = detailLevels(BILL_DENOMINATION);
 
 /** The smallest unit that is at least `minPx` tall at this zoom. */
-export function detailLevelFor(pxPerMeter, minPx = 5) {
-  return DETAIL_LEVELS.find((lvl) => lvl.height * pxPerMeter >= minPx) ?? DETAIL_LEVELS.at(-1);
+export function detailLevelFor(pxPerMeter, minPx = 5, levels = DETAIL_LEVELS) {
+  return levels.find((lvl) => lvl.height * pxPerMeter >= minPx) ?? levels.at(-1);
 }
 
 // ---------------------------------------------------------------------------

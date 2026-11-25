@@ -1,23 +1,27 @@
-/* Stack It: chapter text cards. */
+/* Stack It: chapter text cards, intro and finale. */
 
-.card {
-  position: sticky;
-  top: 14vh;
-  max-width: 22rem;
-  padding: var(--space-3);
+.card,
+.panel {
   background: var(--paper);
   border: 1px solid var(--paper-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
   backdrop-filter: blur(10px) saturate(1.2);
+}
+
+.card {
+  position: sticky;
+  top: calc(var(--topbar-h) + 6vh);
+  max-width: 22rem;
+  padding: var(--space-3);
   display: grid;
   gap: var(--space-1);
 }
 
 .card--intro {
   position: static;
-  max-width: 34rem;
+  max-width: 38rem;
   gap: var(--space-2);
   padding: var(--space-4);
 }
@@ -26,6 +30,15 @@
   position: static;
   max-width: 46rem;
   gap: var(--space-2);
+}
+
+.intro__bill svg {
+  display: block;
+  width: min(260px, 70%);
+  height: auto;
+  transform: rotate(-3deg);
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.12));
+  --art-ink: #2f5222;
 }
 
 .eyebrow,
@@ -38,7 +51,8 @@
 }
 
 .debt-figure {
-  font-size: var(--step-3);
+  font-size: clamp(1.6rem, 4.2vw, 2.9rem);
+  white-space: nowrap;
   min-height: 1.1em; /* reserve the line so nothing shifts when data arrives */
   font-variant-numeric: lining-nums tabular-nums;
   overflow-wrap: anywhere;
@@ -54,13 +68,8 @@
   font-size: var(--step-1);
 }
 
-.sources {
-  max-width: 46rem;
-  padding: var(--space-2) var(--space-3);
-  background: var(--paper);
-  border-radius: var(--radius);
-  font-size: var(--step--1);
-  color: var(--ink-soft);
+.hint {
+  margin-top: calc(var(--space-1) * -1);
 }
 
 .data-note {
@@ -70,16 +79,28 @@
   background: rgb(138 90 18 / 0.08);
 }
 
+.sources {
+  max-width: 46rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border-radius: var(--radius);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
 @media (max-width: 720px) {
   .card {
-    top: 8vh;
-    max-width: 58%;
+    max-width: 52%;
     padding: var(--space-2);
   }
 
   .card--intro,
   .card--wide {
     max-width: none;
+  }
+
+  .card--intro {
+    padding: var(--space-3);
   }
 
   .chapter .card p:not(.chapter__num) {
