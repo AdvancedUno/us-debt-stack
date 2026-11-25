@@ -1,0 +1,63 @@
+/* Stack It: page layout. The stage is fixed; the track scrolls over it. */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--sky);
+  --stack-x: 52%;
+  --stack-w: clamp(56px, 8vw, 104px);
+}
+
+.track {
+  position: relative;
+  z-index: 1;
+}
+
+/* Section heights are set in px by climb.js (screens x viewport height). */
+.intro {
+  min-height: 100vh;
+  display: grid;
+  align-items: center;
+  padding: var(--space-4) clamp(1rem, 4vw, 3rem);
+}
+
+.chapter {
+  min-height: 150vh; /* overwritten by climb.js */
+  padding: 14vh clamp(1rem, 4vw, 3rem) 0;
+}
+
+.finale {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) clamp(1rem, 4vw, 3rem);
+}
+
+.altimeter {
+  position: fixed;
+  z-index: 2;
+  top: var(--space-3);
+  right: var(--space-3);
+  width: 17rem;
+}
+
+@media (max-width: 720px) {
+  .stage {
+    --stack-x: 62%;
+    --stack-w: 52px;
+  }
+
+  .chapter {
+    padding-top: 8vh;
+  }
+
+  .altimeter {
+    top: auto;
+    left: var(--space-2);
+    right: var(--space-2);
+    bottom: var(--space-2);
+    width: auto;
+  }
+}

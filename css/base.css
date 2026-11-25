@@ -1,0 +1,109 @@
+/* Stack It: design tokens, reset, typography. */
+
+:root {
+  /* Color */
+  --money: #85bb65;
+  --money-light: #9fcd82;
+  --money-dark: #2f5222;
+  --money-edge: rgb(47 82 34 / 0.55);
+  --ink: #16181d;
+  --ink-soft: #454a55;
+  --paper: rgb(252 250 244 / 0.82);
+  --paper-solid: #fcfaf4;
+  --paper-border: rgb(22 24 29 / 0.12);
+  --accent: #8a5a12;
+  --focus: #1f5fd1;
+  --sky: #d6ecf8;               /* set every frame by climb.js */
+  --on-sky: rgb(22 24 29 / 0.72);
+  --on-sky-line: rgb(22 24 29 / 0.28);
+
+  /* Type */
+  --font-display: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.75rem;
+  --step-3: clamp(1.9rem, 4.6vw, 3.4rem);
+
+  /* Spacing: 8px grid */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+
+  /* Shape and motion */
+  --radius: 12px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.08);
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 200ms;
+}
+
+.stage[data-sky="dark"] {
+  --on-sky: rgb(240 238 255 / 0.82);
+  --on-sky-line: rgb(240 238 255 / 0.3);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: var(--step-2);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "stack-it",
+  "private": true,
+  "description": "The U.S. national debt as a stack of $100 bills you climb. Static site, no build step.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "snapshot": "node scripts/refresh-snapshot.mjs",
+    "serve": "python -m http.server 8765"
+  }
+}

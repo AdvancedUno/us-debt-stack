@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stack It: Climb the U.S. National Debt</title>
+  <meta name="description" content="The U.S. national debt, live from the Treasury, stacked in $100 bills. Scroll up past a person, Mount Everest and the Space Station, into orbit and toward the Moon.">
+  <meta name="theme-color" content="#cfe8f6">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Stack It: Climb the U.S. National Debt">
+  <meta property="og:description" content="Today's national debt as a stack of $100 bills you can climb, from the ground to past geostationary orbit.">
+
+  <link rel="icon" href="./img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;700&display=swap">
+  <link rel="preconnect" href="https://api.fiscaldata.treasury.gov" crossorigin>
+  <link rel="preconnect" href="https://api.worldbank.org" crossorigin>
+
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/chapters.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <!-- The stage is the fixed "camera" view: sky, ground, the stack and landmark markers.
+       It is decorative; the same information is in the chapter text below. -->
+  <div class="stage" aria-hidden="true">
+    <div class="ground"></div>
+    <div class="stack"><div class="stack__texture"></div></div>
+    <div class="markers"></div>
+  </div>
+
+  <main class="track">
+    <section class="intro" id="top" aria-labelledby="intro-title">
+      <div class="card card--intro">
+        <p class="eyebrow">U.S. total public debt outstanding</p>
+        <h1 id="intro-title" class="debt-figure" data-field="debt-total">Loading&hellip;</h1>
+        <p class="as-of">
+          As of <span data-field="debt-date">&hellip;</span> &middot;
+          <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">U.S. Treasury, Debt to the Penny</a>
+        </p>
+        <p class="lede">Stacked in $100 bills, it would reach <strong data-field="stack-height">&hellip;</strong> into the sky.</p>
+        <p class="small">Growing by about <span data-field="growth-per-second">&hellip;</span> a second (an estimate from the last year of data).</p>
+        <a class="button" href="#ground">Start climbing</a>
+        <p class="data-note" data-field="data-note" hidden></p>
+      </div>
+    </section>
+
+    <section class="chapter" id="ground" data-chapter="ground" aria-labelledby="ch1-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 1</p>
+        <h2 id="ch1-title">Ground level</h2>
+        <p>One $100 bill is 0.11&nbsp;mm thick. The first centimeter of the stack is about 92 bills: roughly $9,200.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="human" data-chapter="human" aria-labelledby="ch2-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 2</p>
+        <h2 id="ch2-title">Human scale</h2>
+        <p>A person 1.75&nbsp;m tall: $1.6 million. A school bus: $2.9 million. A two-story house: about $7 million.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="city" data-chapter="city" aria-labelledby="ch3-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 3</p>
+        <h2 id="ch3-title">City scale</h2>
+        <p>The Gateway Arch, 192&nbsp;m: $176 million. The Burj Khalifa, 828&nbsp;m: $758 million. Still under a billion dollars.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="mountain" data-chapter="mountain" aria-labelledby="ch4-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 4</p>
+        <h2 id="ch4-title">Mountain scale</h2>
+        <p>Mount Everest, 8,849&nbsp;m: $8.1 billion. Airliners cruise at about 11&nbsp;km: $10 billion. That is 0.02% of the debt.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="space" data-chapter="space" aria-labelledby="ch5-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 5</p>
+        <h2 id="ch5-title">Space</h2>
+        <p>The edge of space, 100&nbsp;km: $92 billion. The International Space Station, about 400&nbsp;km: $366 billion, under 1% of the debt.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="orbit" data-chapter="orbit" aria-labelledby="ch6-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 6</p>
+        <h2 id="ch6-title">Orbit</h2>
+        <p>GPS satellites, 20,200&nbsp;km: $18.5 trillion. Geostationary orbit, 35,786&nbsp;km: $32.8 trillion. The stack ends at <span data-field="stack-height">&hellip;</span>.</p>
+      </div>
+    </section>
+
+    <section class="chapter" id="gap" data-chapter="gap" aria-labelledby="ch7-title">
+      <div class="card">
+        <p class="chapter__num">Chapter 7</p>
+        <h2 id="ch7-title">The gap</h2>
+        <p>Above the top of the stack, the scroll switches to a constant scale. The Moon is still <span data-field="gap-distance">&hellip;</span> away.</p>
+      </div>
+    </section>
+
+    <section class="finale" id="finale" aria-labelledby="finale-title">
+      <div class="card card--wide">
+        <h2 id="finale-title">The whole climb, to scale</h2>
+        <p>On one straight ruler from the ground to the Moon, today's stack covers <strong data-field="moon-percent">&hellip;</strong> of the distance.</p>
+        <div class="ruler" role="img" data-field-label="ruler">
+          <div class="ruler__bar"><div class="ruler__stack"></div></div>
+          <div class="ruler__ticks"></div>
+        </div>
+        <p class="small">Stack width is not to scale: a real stack would be 15.6&nbsp;cm wide.</p>
+      </div>
+      <footer class="sources">
+        <p>Data: <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">Debt to the Penny</a> and
+          <a href="https://fiscaldata.treasury.gov/datasets/historical-debt-outstanding/">Historical Debt Outstanding</a> (U.S. Treasury),
+          <a href="https://data.worldbank.org/indicator/SP.POP.TOTL?locations=US">population</a> and
+          <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=US">GDP</a> (World Bank).
+          Bill thickness: 0.0043&nbsp;in, per the Bureau of Engraving and Printing.</p>
+      </footer>
+    </section>
+  </main>
+
+  <aside class="altimeter" aria-label="Altimeter" hidden>
+    <dl>
+      <div class="altimeter__row altimeter__row--main">
+        <dt>Height</dt>
+        <dd data-alt="height">0 mm</dd>
+      </div>
+      <div class="altimeter__row">
+        <dt>Money at this height</dt>
+        <dd data-alt="dollars">$0</dd>
+      </div>
+      <div class="altimeter__row">
+        <dt>Next</dt>
+        <dd data-alt="next">&hellip;</dd>
+      </div>
+      <div class="altimeter__row altimeter__row--level">
+        <dt>Each bold line</dt>
+        <dd data-alt="level">&hellip;</dd>
+      </div>
+    </dl>
+  </aside>
+</body>
+</html>
