@@ -1,0 +1,105 @@
+{
+  "savedAt": "2026-11-25",
+  "year": 2025,
+  "source": "IMF World Economic Outlook (DataMapper): general government gross debt (GGXWDG_NGDP), GDP in current U.S. dollars (NGDPD), population (LP).",
+  "sourceUrl": "https://www.imf.org/external/datamapper/GGXWDG_NGDP@WEO",
+  "note": "General government debt covers all levels of government, so the U.S. figure here differs from the federal Treasury figure.",
+  "countries": [
+    {
+      "iso": "USA",
+      "name": "United States",
+      "debtPctGdp": 124.4,
+      "gdp": 30861300000000,
+      "population": 341890000,
+      "debt": 38391457200000
+    },
+    {
+      "iso": "CHN",
+      "name": "China",
+      "debtPctGdp": 98.6,
+      "gdp": 19626191000000,
+      "population": 1404890000,
+      "debt": 19351424326000
+    },
+    {
+      "iso": "JPN",
+      "name": "Japan",
+      "debtPctGdp": 204.8,
+      "gdp": 4453094000000,
+      "population": 123291000,
+      "debt": 9119936512000
+    },
+    {
+      "iso": "GBR",
+      "name": "United Kingdom",
+      "debtPctGdp": 102.1,
+      "gdp": 4012224000000,
+      "population": 69487000,
+      "debt": 4096480703999.9995
+    },
+    {
+      "iso": "FRA",
+      "name": "France",
+      "debtPctGdp": 115.5,
+      "gdp": 3382595000000,
+      "population": 68852000,
+      "debt": 3906897225000
+    },
+    {
+      "iso": "ITA",
+      "name": "Italy",
+      "debtPctGdp": 137.1,
+      "gdp": 2550111000000,
+      "population": 58934000,
+      "debt": 3496202181000
+    },
+    {
+      "iso": "IND",
+      "name": "India",
+      "debtPctGdp": 84.3,
+      "gdp": 3908964000000,
+      "population": 1463866000,
+      "debt": 3295256652000
+    },
+    {
+      "iso": "DEU",
+      "name": "Germany",
+      "debtPctGdp": 62.7,
+      "gdp": 5115594000000,
+      "population": 83513000,
+      "debt": 3207477438000
+    },
+    {
+      "iso": "CAN",
+      "name": "Canada",
+      "debtPctGdp": 113.6,
+      "gdp": 2321182000000,
+      "population": 41602000,
+      "debt": 2636862752000
+    },
+    {
+      "iso": "BRA",
+      "name": "Brazil",
+      "debtPctGdp": 93.3,
+      "gdp": 2279918000000,
+      "population": 213421000,
+      "debt": 2127163493999.9998
+    },
+    {
+      "iso": "KOR",
+      "name": "South Korea",
+      "debtPctGdp": 52.4,
+      "gdp": 1881748000000,
+      "population": 51685000,
+      "debt": 986035952000
+    },
+    {
+      "iso": "MEX",
+      "name": "Mexico",
+      "debtPctGdp": 61.7,
+      "gdp": 1835039000000,
+      "population": 133366999.99999999,
+      "debt": 1132219063000
+    }
+  ]
+}

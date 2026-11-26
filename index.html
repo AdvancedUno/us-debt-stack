@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="./css/chapters.css">
   <link rel="stylesheet" href="./css/components.css">
   <link rel="stylesheet" href="./css/art.css">
+  <link rel="stylesheet" href="./css/explore.css">
   <script type="module" src="./js/main.js"></script>
 </head>
 <body>
@@ -42,7 +43,10 @@
   </svg>
 
   <header class="topbar">
-    <a class="brand" href="#top">Stack&nbsp;It</a>
+    <div class="topbar__left">
+      <a class="brand" href="#top">Stack&nbsp;It</a>
+      <button type="button" class="topbar__elevator" data-action="elevator"><span aria-hidden="true">&#9650;</span> Elevator</button>
+    </div>
     <div class="topbar__ticker">
       <span class="topbar__label">Estimated debt right now</span>
       <span class="topbar__value" data-field="ticker" role="timer" aria-label="Estimated national debt right now">&hellip;</span>
@@ -72,6 +76,14 @@
   </div>
   <div class="tip" role="status" hidden></div>
 
+  <div class="narrator panel" role="region" aria-label="Guided tour" hidden>
+    <p class="narrator__text" aria-live="polite"><strong class="narrator__title"></strong> <span class="narrator__body"></span></p>
+    <div class="narrator__actions">
+      <button type="button" class="link-button" data-act="pause" aria-pressed="false">Pause</button>
+      <button type="button" class="link-button" data-act="stop">Stop</button>
+    </div>
+  </div>
+
   <nav class="rail" aria-label="Chapters"></nav>
 
   <main class="track">
@@ -84,10 +96,29 @@
           Official figure as of <span data-field="debt-date">&hellip;</span> &middot;
           <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">U.S. Treasury, Debt to the Penny</a>
         </p>
-        <p class="lede">Stacked in $100 bills, it would reach <strong data-field="stack-height">&hellip;</strong> into the sky.</p>
-        <p class="small">It grows by about <span data-field="growth-per-second">&hellip;</span> a second, on average over the last year.</p>
-        <a class="button" href="#ground">Start climbing</a>
-        <p class="small hint">Scroll down to climb up. Keys 1&ndash;7 jump between chapters.</p>
+        <div class="guess" data-state="asking">
+          <div class="guess__ask">
+            <p class="lede">Stacked in $100 bills, how high would it reach? <strong>Guess first.</strong></p>
+            <div class="guess__control">
+              <input type="range" class="guess__range" aria-label="Your guess for the height of the stack">
+              <div class="guess__ticks" aria-hidden="true"></div>
+            </div>
+            <p class="guess__readout">Your guess: <strong data-guess="value">&hellip;</strong>, <span data-guess="near">&hellip;</span></p>
+            <div class="guess__actions">
+              <button type="button" class="button" data-guess="lock">Lock in my guess</button>
+              <button type="button" class="link-button" data-guess="skip">Just show me</button>
+            </div>
+          </div>
+          <div class="guess__result" hidden>
+            <p class="lede" data-guess="result" aria-live="polite"></p>
+            <p class="small">It grows by about <span data-field="growth-per-second">&hellip;</span> a second, on average over the last year.</p>
+            <div class="guess__actions">
+              <a class="button button--down" href="#ground">Start climbing</a>
+              <button type="button" class="button button--ghost" data-action="elevator">Take the elevator</button>
+            </div>
+            <p class="small hint">Scroll down to climb up. Keys 1&ndash;9 and 0 jump between sections.</p>
+          </div>
+        </div>
         <p class="data-note" data-field="data-note" hidden></p>
       </div>
     </section>
@@ -157,13 +188,92 @@
           <div class="ruler__ticks"></div>
         </div>
         <p class="small">Stack width is not to scale: a real stack would be 15.6&nbsp;cm wide. Drawings are not to scale; their heights are.</p>
+        <p class="finale__more"><a href="#history">Keep going: 237 years of history, other ways to see it, and other countries &darr;</a></p>
+      </div>
+    </section>
+
+    <section class="appendix" id="history" aria-labelledby="history-title">
+      <div class="sheet">
+        <p class="eyebrow">More to explore</p>
+        <h2 id="history-title">237 years of debt</h2>
+        <p class="sheet__lede">Every fiscal year since 1790. Hover or use the arrow keys to read a year; click one to see its stack. Shaded bands mark major events. Want to watch it happen? Press <em>Play</em> in the Explore panel.</p>
+        <fieldset class="segmented segmented--inline">
+          <legend class="visually-hidden">Chart view</legend>
+          <label><input type="radio" name="chart-mode" value="log" checked><span>Dollars, log scale</span></label>
+          <label><input type="radio" name="chart-mode" value="linear"><span>Dollars</span></label>
+          <label><input type="radio" name="chart-mode" value="gdp"><span>Share of GDP</span></label>
+        </fieldset>
+        <div class="chart" tabindex="0" role="group" aria-label="Federal debt by fiscal year, 1790 to today. Left and right arrows move between years; Enter shows that year on the stack.">
+          <svg class="chart__svg" aria-hidden="true" focusable="false"></svg>
+          <div class="chart__tip" hidden></div>
+        </div>
+        <p class="visually-hidden chart__live" aria-live="polite"></p>
+        <p class="small">Nominal dollars, not adjusted for inflation; a log scale shows equal growth rates as equal slopes. Share of GDP uses World Bank GDP, which starts in 1960.</p>
+        <details class="table-view chart__table">
+          <summary>Show as a table</summary>
+          <table>
+            <thead><tr><th scope="col">Year</th><th scope="col">Debt</th><th scope="col">Stack height</th><th scope="col">Share of GDP</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </details>
+      </div>
+    </section>
+
+    <section class="appendix" id="compare" aria-labelledby="compare-title">
+      <div class="sheet">
+        <p class="eyebrow">More to explore</p>
+        <h2 id="compare-title">Other ways to see <span data-field="compare-total">&hellip;</span></h2>
+        <div class="compare__tabs" role="tablist" aria-label="Ways to measure the same bills"></div>
+        <div class="compare__panel" id="compare-panel" role="tabpanel">
+          <p class="compare__figure"></p>
+          <p class="compare__text"></p>
+          <div class="compare__icons" role="img"></div>
+          <p class="compare__more small"></p>
+        </div>
+        <h3 class="sheet__h3">How fast it grows</h3>
+        <dl class="pace">
+          <div><dt>Every second</dt><dd data-pace="second">&hellip;</dd></div>
+          <div><dt>Every day</dt><dd data-pace="day">&hellip;</dd></div>
+          <div><dt>Every year</dt><dd data-pace="year">&hellip;</dd></div>
+          <div><dt>An Everest of bills every</dt><dd data-pace="everest">&hellip;</dd></div>
+          <div><dt>Next whole trillion</dt><dd data-pace="milestone">&hellip;</dd></div>
+        </dl>
+        <p class="small">Averages over the last year of Debt to the Penny data, carried forward. These are illustrations, not forecasts: the real pace changes from day to day.</p>
+      </div>
+    </section>
+
+    <section class="appendix" id="countries" aria-labelledby="countries-title">
+      <div class="sheet">
+        <p class="eyebrow">More to explore</p>
+        <h2 id="countries-title">Other countries, same scale</h2>
+        <p class="sheet__lede">Government debt for twelve large economies, each as a stack of $100 bills on one shared scale.</p>
+        <fieldset class="segmented segmented--inline">
+          <legend class="visually-hidden">Compare by</legend>
+          <label><input type="radio" name="country-mode" value="total" checked><span>Total</span></label>
+          <label><input type="radio" name="country-mode" value="person"><span>Per person</span></label>
+          <label><input type="radio" name="country-mode" value="gdp"><span>Share of GDP</span></label>
+        </fieldset>
+        <div class="countries__plot">
+          <div class="countries__axis" aria-hidden="true"></div>
+          <div class="countries__bars"></div>
+          <div class="countries__tip" role="status" hidden></div>
+        </div>
+        <p class="small countries__meta"></p>
+        <details class="table-view countries__table">
+          <summary>Show as a table</summary>
+          <table>
+            <thead><tr><th scope="col">Country</th><th scope="col">Debt</th><th scope="col">Stack height</th><th scope="col">Per person</th><th scope="col">Share of GDP</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </details>
       </div>
       <footer class="sources">
         <p>Data: <a href="https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/">Debt to the Penny</a> and
           <a href="https://fiscaldata.treasury.gov/datasets/historical-debt-outstanding/">Historical Debt Outstanding</a> (U.S. Treasury),
           <a href="https://data.worldbank.org/indicator/SP.POP.TOTL?locations=US">population</a> and
-          <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=US">GDP</a> (World Bank).
-          Bill thickness: 0.0043&nbsp;in, per the Bureau of Engraving and Printing.</p>
+          <a href="https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=US">GDP</a> (World Bank),
+          <a href="https://www.imf.org/external/datamapper/GGXWDG_NGDP@WEO">government debt by country</a> (IMF).
+          Bill size, thickness and weight per the Bureau of Engraving and Printing.</p>
       </footer>
     </section>
   </main>
@@ -205,6 +315,12 @@
       <p class="dock__note" data-out="gdp"></p>
 
       <div data-panel="nation">
+        <div class="dock__timeline">
+          <button type="button" class="play" data-control="play" aria-pressed="false">
+            <span class="play__icon" aria-hidden="true"></span><span class="play__label">Play 1790 → today</span>
+          </button>
+          <svg class="spark" aria-hidden="true" focusable="false"></svg>
+        </div>
         <label class="dock__slider">
           <span class="visually-hidden">Year</span>
           <input type="range" data-control="year" min="0" max="1" value="1" step="1">
@@ -215,6 +331,11 @@
           <span>Today</span>
         </div>
         <p class="dock__note">Nominal dollars. Year-end figures for each fiscal year.</p>
+        <label class="born">
+          <span>Born in</span>
+          <input type="number" inputmode="numeric" data-control="born" placeholder="year" min="1790" max="2026">
+        </label>
+        <p class="dock__note dock__lifetime" data-out="lifetime" aria-live="polite"></p>
       </div>
 
       <div data-panel="person" hidden>
@@ -224,6 +345,7 @@
           <label><input type="radio" name="denomination" value="1"><span>$1 bills</span></label>
         </fieldset>
       </div>
+      <button type="button" class="link-button dock__copy" data-control="copy">Copy link to this view</button>
     </div>
   </details>
 </body>

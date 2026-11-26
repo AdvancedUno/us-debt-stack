@@ -101,11 +101,18 @@ const PARSERS = {
 };
 export const DATA_KEYS = Object.freeze(Object.keys(PARSERS));
 
-/** Fetch every endpoint in parallel. Returns what succeeded and what failed. */
-export async function fetchLive({ today, ...opts } = {}) {
+/**
+ * Fetch every endpoint in parallel. Returns what succeeded and what failed.
+ * `onResult(key, value)` is called as each one arrives.
+ */
+export async function fetchLive({ today, onResult, ...opts } = {}) {
   const urls = requestUrls(today);
   const results = await Promise.allSettled(
-    DATA_KEYS.map(async (key) => PARSERS[key](await fetchJSON(urls[key], opts))),
+    DATA_KEYS.map(async (key) => {
+      const value = PARSERS[key](await fetchJSON(urls[key], opts));
+      onResult?.(key, value);
+      return value;
+    }),
   );
   const data = {};
   const errors = {};
@@ -114,6 +121,88 @@ export async function fetchLive({ today, ...opts } = {}) {
     else errors[DATA_KEYS[i]] = r.reason;
   });
   return { data, errors };
+}
+
+/**
+ * Fast first paint, then live upgrades.
+ *
+ * Starts the live requests and the snapshot together. `onUpdate(data)` is called:
+ *  - once all live data is in, if that happens within `firstPaintMs`; otherwise
+ *  - at `firstPaintMs` with the snapshot, filled in with whatever live data has arrived,
+ *    and then again (batched) each time more live data arrives.
+ * The live requests get a long timeout (`timeoutMs`), since nobody is waiting on them.
+ * `data` has the same shape as loadData(): the five pieces plus `origin` and `snapshotDate`.
+ * Rejects only if there is nothing to show at all.
+ */
+export async function streamData({
+  onUpdate,
+  snapshotUrl = './data/snapshot.json',
+  firstPaintMs = 1200,
+  timeoutMs = 20_000,
+  batchMs = 80,
+  ...opts
+}) {
+  const live = {};
+  let snapshot = null;
+  let painted = false;
+  let pending = 0;
+
+  const merged = () => {
+    const out = {};
+    const origin = {};
+    for (const key of DATA_KEYS) {
+      if (key in live) {
+        out[key] = live[key];
+        origin[key] = 'live';
+      } else if (snapshot?.data?.[key]) {
+        out[key] = snapshot.data[key];
+        origin[key] = 'snapshot';
+      } else {
+        return null; // can't show this piece yet
+      }
+    }
+    const usesSnapshot = Object.values(origin).includes('snapshot');
+    return { ...out, origin, snapshotDate: usesSnapshot ? snapshot.savedAt : null };
+  };
+
+  const paint = () => {
+    clearTimeout(pending);
+    pending = 0;
+    const data = merged();
+    if (!data) return false;
+    painted = true;
+    onUpdate(data);
+    return true;
+  };
+
+  const snapshotReady = fetchJSON(snapshotUrl, { ...opts, timeoutMs: 5000 }).then(
+    (s) => { snapshot = s; },
+    (err) => console.warn('[stack-it] snapshot unavailable.', err),
+  );
+
+  const liveDone = fetchLive({
+    ...opts,
+    timeoutMs,
+    onResult(key, value) {
+      live[key] = value;
+      if (painted) {
+        clearTimeout(pending);
+        pending = setTimeout(paint, batchMs);
+      } else if (Object.keys(live).length === DATA_KEYS.length) {
+        paint(); // everything live, before the deadline: no snapshot needed
+      }
+    },
+  }).then(({ errors }) => {
+    for (const [key, err] of Object.entries(errors)) console.warn(`[stack-it] ${key}: live request failed, keeping saved data.`, err);
+  });
+
+  const deadline = new Promise((resolve) => setTimeout(resolve, firstPaintMs)).then(() => snapshotReady);
+  await Promise.race([deadline, liveDone]);
+  if (!painted) paint();
+
+  await Promise.all([deadline, liveDone]);
+  if (pending || !painted) paint(); // flush a batched update, or a late first paint
+  if (!painted) throw new Error('No data: the live requests and the saved snapshot all failed.');
 }
 
 /**

@@ -150,8 +150,12 @@ export function createClimb({ stage, track, chapters }) {
       flagText.textContent = stack.label;
       schedule();
     },
-    /** Scroll so the camera sits at altitude h. */
-    scrollToAltitude(h, { behavior = 'auto' } = {}) {
+    /** The scroll position (px) that puts the camera at altitude h. */
+    scrollTopFor(h) {
+      return climbTop + progressAt(h, chapters) * P;
+    },
+    /** Scroll so the camera sits at altitude h. 'instant' ignores CSS smooth scrolling. */
+    scrollToAltitude(h, { behavior = 'instant' } = {}) {
       window.scrollTo({ top: climbTop + progressAt(h, chapters) * P, behavior });
     },
     subscribe(fn) {

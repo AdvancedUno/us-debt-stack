@@ -196,3 +196,44 @@ export function growthPerSecond(latest, earlier) {
 export function perPerson(debt, population) {
   return debt / population;
 }
+
+// ---------------------------------------------------------------------------
+// Other ways to see the same pile of bills.
+// ---------------------------------------------------------------------------
+
+export const BILL_LENGTH_M = 6.14 * INCH_M; // 15.6 cm
+export const BILL_WIDTH_M = 2.61 * INCH_M; //  6.63 cm
+export const BILL_MASS_KG = 0.001; //          about one gram, per the BEP
+export const SUN_DISTANCE_M = 149_597_870_700; // one astronomical unit
+const SECONDS_PER_YEAR = 365.25 * SECONDS_PER_DAY;
+
+/** The same number of $100 bills, measured several ways. */
+export function waysToSee(dollars) {
+  const bills = dollars / BILL_DENOMINATION;
+  const height = bills * BILL_THICKNESS_M;
+  const endToEnd = bills * BILL_LENGTH_M;
+  return {
+    bills,
+    height,
+    aroundEquator: height / EQUATOR_M,
+    tonnes: (bills * BILL_MASS_KG) / 1000,
+    endToEnd,
+    moonTrips: endToEnd / MOON_DISTANCE_M,
+    sunFraction: endToEnd / SUN_DISTANCE_M,
+    areaKm2: (bills * BILL_LENGTH_M * BILL_WIDTH_M) / 1e6,
+    countingYears: bills / SECONDS_PER_YEAR, // one bill per second, nonstop
+    oneDollarHeight: height * BILL_DENOMINATION,
+  };
+}
+
+/** Growth per second, day and year, in dollars and in stack height. */
+export function paceOf(ratePerSecond) {
+  const per = (seconds) => ({ dollars: ratePerSecond * seconds, height: dollarsToMeters(ratePerSecond * seconds) });
+  return { second: per(1), day: per(SECONDS_PER_DAY), year: per(SECONDS_PER_YEAR) };
+}
+
+/** When `current` reaches the next multiple of `step` at a constant rate. */
+export function nextMilestone(current, ratePerSecond, step = 1e12) {
+  const target = (Math.floor(current / step) + 1) * step;
+  return { target, seconds: ratePerSecond > 0 ? (target - current) / ratePerSecond : Infinity };
+}

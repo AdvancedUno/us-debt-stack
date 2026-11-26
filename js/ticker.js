@@ -2,13 +2,15 @@
 // Debt to the Penny updates once per business day, so "now" is an estimate:
 // the official figure plus the average growth rate times the time since that record.
 
-import { formatUSD } from './format.js';
+import { formatHeight, formatUSD } from './format.js';
+import { dollarsToMeters } from './scale.js';
 
 const DROP_EVERY = 100_000; // one falling bill per $100,000 of growth (about one a second)
 
 export function createTicker({ valueEl, arrivedEl, elapsedEl, pileEl, debt, recordDate, ratePerSecond, reducedMotion }) {
   // The record is the total at the end of its day (Eastern time).
-  const recordEnd = Date.parse(`${recordDate}T23:59:59-05:00`);
+  const endOfDay = (date) => Date.parse(`${date}T23:59:59-05:00`);
+  let recordEnd = endOfDay(recordDate);
   const arrivedAt = Date.now();
   let dropped = 0;
   let pileHeight = 0;
@@ -31,7 +33,7 @@ export function createTicker({ valueEl, arrivedEl, elapsedEl, pileEl, debt, reco
     const grown = ratePerSecond * seconds;
     arrivedEl.textContent = `+${formatUSD(grown)}`;
     const s = Math.floor(seconds);
-    elapsedEl.textContent = `in ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    elapsedEl.textContent = `· ${formatHeight(dollarsToMeters(grown))} taller · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     const due = Math.floor(grown / DROP_EVERY);
     // After a hidden tab, don't rain hundreds of bills at once.
     if (due - dropped > 3) dropped = due - 1;
@@ -43,4 +45,14 @@ export function createTicker({ valueEl, arrivedEl, elapsedEl, pileEl, debt, reco
 
   tick();
   setInterval(tick, 100);
+
+  return {
+    /** Swap in a newer official figure and rate (e.g. live data replacing saved data). */
+    setBase(next) {
+      debt = next.debt;
+      recordEnd = endOfDay(next.recordDate);
+      ratePerSecond = next.ratePerSecond;
+      tick();
+    },
+  };
 }

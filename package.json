@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "snapshot": "node scripts/refresh-snapshot.mjs",
-    "serve": "python -m http.server 8765"
+    "countries": "node scripts/refresh-countries.mjs",
+    "serve": "python scripts/serve.py 8765"
   }
 }

@@ -5,7 +5,7 @@ import { formatHeight, formatPercent, formatUSDCompact } from './format.js';
 import { dollarsToMeters } from './scale.js';
 
 export function createBreakdown({ stage, stackEl, tip, debt }) {
-  const share = debt.public / debt.total;
+  let share = debt.public / debt.total;
   let enabled = true;
   let pinned = false;
 
@@ -75,6 +75,11 @@ export function createBreakdown({ stage, stackEl, tip, debt }) {
   }, { passive: true });
 
   return {
+    setDebt(next) {
+      debt = next;
+      share = debt.public / debt.total;
+      if (!tip.hidden) show(...center());
+    },
     setEnabled(value) {
       enabled = value;
       if (!tip.hidden) show(...center());

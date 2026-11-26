@@ -50,6 +50,33 @@ export function createLandmarks({ markerLayer, artLayer }) {
     return item;
   });
 
+  // The reader's guess gets its own marker (no drawing), added when they lock it in.
+  function addGuessMarker() {
+    const marker = document.createElement('div');
+    marker.className = 'marker marker--guess';
+    marker.style.visibility = 'hidden';
+    const line = document.createElement('span');
+    line.className = 'marker__line';
+    line.setAttribute('aria-hidden', 'true');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'marker__label';
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', card.id);
+    button.innerHTML = '<span class="marker__name">Your guess</span><span class="marker__detail"></span>';
+    marker.append(line, button);
+    markerLayer.append(marker);
+    const item = { id: 'guess', name: 'Your guess', height: 1, fact: '', marker, button, artEl: null, anchor: 'top', visible: false, artHeight: 0 };
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (open === item) closeCard();
+      else openCard(item);
+    });
+    items.push(item);
+    return item;
+  }
+  let guessItem = null;
+
   const measureArt = () => {
     for (const it of items) if (it.artEl) it.artHeight = it.artEl.offsetHeight;
   };
@@ -98,7 +125,7 @@ export function createLandmarks({ markerLayer, artLayer }) {
 
   let denomination = 100;
 
-  return function update({ yAt, visibleY, stack }) {
+  function update({ yAt, visibleY, stack }) {
     if (stack.denomination !== denomination) {
       denomination = stack.denomination;
       for (const it of items) {
@@ -125,6 +152,21 @@ export function createLandmarks({ markerLayer, artLayer }) {
         if (!visible && open === it) closeCard();
       }
     }
+  }
+
+  return {
+    update,
+    /** Show the reader's guess as a marker on the climb. */
+    setGuess(height, actual) {
+      guessItem ??= addGuessMarker();
+      guessItem.height = height;
+      guessItem.visible = null; // force a visibility refresh on the next frame
+      guessItem.button.querySelector('.marker__detail').textContent = formatHeight(height);
+      const r = actual / height;
+      guessItem.fact = r >= 1
+        ? `The real stack keeps going: it is ${r < 10 ? formatNumber(r, 1) : formatNumber(Math.round(r))} times taller than this.`
+        : `The real stack stopped below this, at ${formatHeight(actual)}.`;
+    },
   };
 }
 

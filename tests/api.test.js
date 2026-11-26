@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchJSON, loadData, parseDebtRow, parseHistory, parseWorldBank, requestUrls } from '../js/api.js';
+import { fetchJSON, loadData, parseDebtRow, parseHistory, parseWorldBank, requestUrls, streamData } from '../js/api.js';
 import { formatHeight, formatUSDCompact } from '../js/format.js';
 
 const PENNY = {
@@ -68,6 +68,92 @@ test('loadData fills only the failed pieces from the snapshot', async () => {
   assert.equal(data.origin.debt, 'live');
   assert.equal(data.population.value, 1);
   assert.equal(data.snapshotDate, '2026-11-24');
+});
+
+// --- streamData: first paint fast, then live upgrades --------------------------------
+
+const SNAPSHOT = {
+  savedAt: '2026-11-24',
+  data: {
+    debt: { date: '2026-11-22', total: 1, public: 1, intragov: 0 },
+    yearAgo: { date: '2025-11-22', total: 1, public: 1, intragov: 0 },
+    history: [{ year: 1790, date: '1790-01-01', total: 1 }],
+    population: { year: 2024, value: 1 },
+    gdp: [{ year: 2024, value: 1 }],
+  },
+};
+const WB = [{}, [{ date: '2025', value: 9 }]];
+const HISTORY = { data: [{ record_date: '2026-09-30', record_fiscal_year: '2026', debt_outstanding_amt: '5' }] };
+
+/** A fake fetch: per-endpoint delay in ms (or 'fail'), resolving like Response. */
+function fakeFetch(delays = {}) {
+  const route = (url) => {
+    if (url.includes('snapshot')) return ['snapshot', SNAPSHOT];
+    if (url.includes('SP.POP')) return ['population', WB];
+    if (url.includes('worldbank')) return ['gdp', WB];
+    if (url.includes('debt_outstanding')) return ['history', HISTORY];
+    if (url.includes('gte')) return ['yearAgo', PENNY];
+    return ['debt', PENNY];
+  };
+  return (url, { signal } = {}) => {
+    const [key, body] = route(url);
+    const delay = delays[key] ?? 0;
+    return new Promise((resolve, reject) => {
+      if (delay === 'fail') return reject(new TypeError(`Failed to fetch ${key}`));
+      const t = setTimeout(() => resolve({ ok: true, json: async () => body }), delay);
+      signal?.addEventListener('abort', () => { clearTimeout(t); reject(signal.reason); });
+    });
+  };
+}
+
+async function collect(delays, opts = {}) {
+  const updates = [];
+  await streamData({
+    fetchImpl: fakeFetch(delays),
+    snapshotUrl: 'snapshot.json',
+    firstPaintMs: 40,
+    batchMs: 5,
+    onUpdate: (d) => updates.push(d),
+    ...opts,
+  });
+  return updates;
+}
+
+test('streamData: all live within the deadline paints once, all live', async () => {
+  const updates = await collect({});
+  assert.equal(updates.length, 1);
+  assert.ok(Object.values(updates[0].origin).every((o) => o === 'live'));
+  assert.equal(updates[0].snapshotDate, null);
+});
+
+test('streamData: a slow endpoint paints saved data first, then upgrades', async () => {
+  const updates = await collect({ debt: 120 });
+  assert.equal(updates.length, 2);
+  assert.equal(updates[0].origin.debt, 'snapshot');
+  assert.equal(updates[0].debt.total, 1);
+  assert.equal(updates[0].origin.population, 'live');
+  assert.equal(updates.at(-1).origin.debt, 'live');
+  assert.equal(updates.at(-1).debt.total, 40727354329919.53);
+});
+
+test('streamData: a failed endpoint keeps saved data for that piece only', async () => {
+  const updates = await collect({ history: 'fail' });
+  const last = updates.at(-1);
+  assert.equal(last.origin.history, 'snapshot');
+  assert.equal(last.origin.debt, 'live');
+  assert.equal(last.snapshotDate, '2026-11-24');
+});
+
+test('streamData: a hanging endpoint is cut off by the long timeout', async () => {
+  const updates = await collect({ gdp: 10_000 }, { timeoutMs: 150 });
+  assert.equal(updates.at(-1).origin.gdp, 'snapshot');
+});
+
+test('streamData: rejects when there is nothing to show', async () => {
+  await assert.rejects(
+    collect({ snapshot: 'fail', debt: 'fail' }),
+    /No data/,
+  );
 });
 
 test('formatting', () => {
